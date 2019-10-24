@@ -1,13 +1,23 @@
 #include <SFML/Graphics.hpp>
-#include "Ray.hpp"
-#include "Hittable_list.hpp"
+#include "Camera.hpp"
+#include "Container.hpp"
 #include "Sphere.hpp"
-vec3 color(const Ray &r, Hittable *world)
+#include "Random.hpp"
+
+int max = 5;
+unsigned int curr = 0;
+
+vec3 color(const Ray &r, Object *world)
 {
+
+    curr++;
     hit_record rec;
-    if (world->hit(r, 0.0, MAXFLOAT, rec))
+    if (world->hit(r, 0.0001, MAXFLOAT, rec))
     {
-        return vec3({rec.normal[0] + 1, rec.normal[1] + 1, rec.normal[2] + 1}) * 0.5;
+        vec3 target = rec.p + rec.normal + random_in_unit_sphere();
+        vec3 ret = color(Ray(rec.p, target - rec.p), world) * 0.5;
+        curr--;
+        return ret;
     }
     else
     {
@@ -22,9 +32,8 @@ int main()
 
     unsigned int nx = 200 * 4;
     unsigned int ny = 100 * 4;
+    unsigned int ns = 100;
 
-    sf::RenderWindow window(sf::VideoMode(nx, ny), "SFML works!");
-    window.setVerticalSyncEnabled(true);
     size_t size = nx * ny * 4;
     sf::Uint8 *pixels = new sf::Uint8[size];
 
@@ -34,28 +43,35 @@ int main()
     vec3 vertical({0.0, 2.0, 0.0});
     vec3 origin({0.0, 0.0, 0.0});
 
-    Hittable *list[2];
-    list[0] = new Sphere(vec3({0, 0, -1}), 0.5);
-    list[1] = new Sphere(vec3({0, -100.5, -1}), 100);
-    Hittable *world = new Hittable_list(list, 2);
+    Container world;
+    world.Add(new Sphere(vec3({0, 0, -1}), 0.5));
+    world.Add(new Sphere(vec3({0, -100.5, -1}), 100));
+    Camera cam;
 
     for (int j = ny - 1; j >= 0; j--)
     {
         for (int i = 0; i < nx; i++)
         {
-            float u = float(i) / float(nx);
-            float v = float(j) / float(ny);
-            Ray r(origin, lower_left_corner + horizontal * u + vertical * v);
-            vec3 p = r.point_at_parameter(2.0);
-            vec3 col = color(r, world);
+            vec3 col({0, 0, 0});
+            for (unsigned int s = 0; s < ns; s++)
+            {
+                float u = float(i + random_double()) / float(nx);
+                float v = float(j + random_double()) / float(ny);
+                Ray r = cam.get_ray(u, v);
+                col += color(r, &world);
+            }
+            col /= float(ns);
 
-            pixels[index] = col[0] * 255.99;
-            pixels[index + 1] = col[1] * 255.99;
-            pixels[index + 2] = col[2] * 255.99;
+            pixels[index] = sqrt(col[0]) * 255.99;
+            pixels[index + 1] = sqrt(col[1]) * 255.99;
+            pixels[index + 2] = sqrt(col[2]) * 255.99;
             pixels[index + 3] = 255;
             index += 4;
         }
     }
+
+    sf::RenderWindow window(sf::VideoMode(nx, ny), "SFML works!");
+    window.setVerticalSyncEnabled(true);
 
     sf::Image image;
     image.create(nx, ny, pixels);

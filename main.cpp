@@ -3,35 +3,37 @@
 #include "Container.hpp"
 #include "Sphere.hpp"
 #include "Random.hpp"
-
+#include <iostream>
 int max = 5;
 unsigned int curr = 0;
 
 vec3 color(const Ray &r, Object *world)
 {
-
     curr++;
     hit_record rec;
     if (world->hit(r, 0.0001, MAXFLOAT, rec))
     {
         vec3 target = rec.p + rec.normal + random_in_unit_sphere();
-        vec3 ret = color(Ray(rec.p, target - rec.p), world) * 0.5;
-        curr--;
-        return ret;
+        vec3 ret = vec3({1, 1, 1});
+        if (curr < 10)
+        {
+            vec3 ret = color(Ray(rec.p, target - rec.p), world) * 0.5;
+            curr--;
+            return ret;
+        }
     }
-    else
-    {
-        vec3 unit_direction = r.direction().normalized();
-        float t = 0.5 * (unit_direction[1] + 1.0);
-        return vec3({1.0, 1.0, 1.0}) * (1.0 - t) + vec3({0.5, 0.7, 1.0}) * t;
-    }
+    vec3 unit_direction = r.direction().normalized();
+    float t = 0.5 * (unit_direction[1] + 1.0);
+    vec3 ret = vec3({1.0, 1.0, 1.0}) * (1.0 - t) + vec3({0.5, 0.7, 1.0}) * t;
+    curr--;
+    return ret;
 }
 
 int main()
 {
 
-    unsigned int nx = 200 * 4;
-    unsigned int ny = 100 * 4;
+    unsigned int nx = 200 * 8;
+    unsigned int ny = 100 * 8;
     unsigned int ns = 100;
 
     size_t size = nx * ny * 4;

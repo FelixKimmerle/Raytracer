@@ -3,7 +3,7 @@
 #
 CC     = g++ -I./
 CFLAGS = -Wall -std=c++17
-LIBS	= -lsfml-system -lsfml-window -lsfml-graphics -lsfml-audio
+LIBS	= -lsfml-system -lsfml-window -lsfml-graphics -lsfml-audio -lpthread
 #
 # Project files
 #

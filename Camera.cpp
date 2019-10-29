@@ -1,6 +1,6 @@
 #include "Camera.hpp"
 
-Camera::Camera(/* args */) : m_Origin({0, 0, 0}), m_Horizontal({4.0, 0, 0}), m_Vertical({0, 2, 0}), m_Lower_left_corner({-2.0, -1.0, -1.0})
+Camera::Camera(/* args */) : m_Origin({0, 0, 0}), m_Horizontal({4.0, 0, 0}), m_Vertical({0, 2.f, 0}), m_Lower_left_corner({-2.0, -1.0, -1.0})
 {
 }
 

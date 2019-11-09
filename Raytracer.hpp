@@ -32,14 +32,12 @@ private:
     void Worker(unsigned int id);
 
     std::condition_variable m_cvDoWork;
-    std::mutex m_mWorkMutex;
 
     std::condition_variable m_cvDoNotify;
     std::mutex m_mNotifyMutex;
 
     std::mutex mutex;
 
-    std::unique_lock<std::mutex> m_Lock;
 
 public:
     Raytracer(sf::Vector2<unsigned int> p_Size);

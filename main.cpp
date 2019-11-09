@@ -30,7 +30,6 @@ int main()
         window.draw(rc);
         rc.Update();
         window.display();
-        sf::sleep(sf::seconds(1));
     }
 
     return 0;

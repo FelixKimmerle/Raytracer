@@ -37,8 +37,6 @@ Raytracer::Raytracer(sf::Vector2<unsigned int> p_Size) : m_Size(p_Size)
     world.Add(new Sphere(vec3({1, 0, -1}), 0.5, new Metal(vec3({0.8, 0.6, 0.2}))));
     world.Add(new Sphere(vec3({-1, 0, -1}), 0.5, new Metal(vec3({0.8, 0.8, 0.8}))));
 
-    m_Lock = std::unique_lock<std::mutex>(m_mWorkMutex);
-
 
     number = std::thread::hardware_concurrency();
     isRun = true;
@@ -50,31 +48,28 @@ Raytracer::Raytracer(sf::Vector2<unsigned int> p_Size) : m_Size(p_Size)
 
     auto mmm = std::unique_lock<std::mutex>(m_mNotifyMutex);
     m_cvDoNotify.wait(mmm);
-    std::cout << "Init" << std::endl;
-    m_cvDoWork.notify_all();
 }
 sf::Clock sfclock;
 
 void Raytracer::Worker(unsigned int id)
 {
+    std::mutex m_mWorkMutex;
     mutex.lock();
     fThreads++;
     if (fThreads >= number)
     {
         m_cvDoNotify.notify_all();
     }
-    std::cout << "Thread: " << fThreads << std::endl;
     mutex.unlock();
     while (isRun)
     {
-        m_cvDoWork.wait(m_Lock);
+        auto mmm = std::unique_lock<std::mutex>(m_mWorkMutex);
+        m_cvDoWork.wait(mmm);
         if (!isRun)
         {
             break;
         }
 
-        std::cout << "Started thread: " << id << " at " << sfclock.getElapsedTime().asMilliseconds() << std::endl;\
-        getchar();
         for (int j = id; j < m_Size.y * m_Size.x; j += number)
         {
             float u = float(j % m_Size.x + random_double()) / float(m_Size.x);
@@ -96,25 +91,33 @@ void Raytracer::Worker(unsigned int id)
             m_Pixels[index + 2] = sqrt(m_Last[j][2]) * 255.99;
             m_Pixels[index + 3] = 255;
         }
-        std::cout << "Finished thread: " << id << std::endl;
-        std::cout << id << " = " << sfclock.getElapsedTime().asMilliseconds() << std::endl;
 
-        //mutex.lock();
+        mutex.lock();
         fThreads++;
         if (fThreads >= number)
         {
             m_cvDoNotify.notify_all();
         }
-        //mutex.unlock();
+        mutex.unlock();
     }
 }
 
 Raytracer::~Raytracer()
 {
+    isRun = false;
+    m_cvDoWork.notify_all();
+    for (auto x = m_Threads.begin(); x != m_Threads.end(); x++)
+    {
+        x->join();
+    }
+    
+    m_Threads.clear();
 }
 void Raytracer::Update()
 {
+    sf::Clock xclock;
     fThreads = 0;
+    sfclock.restart();
 
     m_cvDoWork.notify_all();
     auto mmm = std::unique_lock<std::mutex>(m_mNotifyMutex);

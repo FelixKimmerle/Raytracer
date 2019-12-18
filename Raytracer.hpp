@@ -7,6 +7,7 @@
 #include <thread>
 #include <condition_variable>
 #include <mutex>
+#include <atomic>
 
 class Raytracer : public sf::Drawable, public sf::Transformable
 {
@@ -28,7 +29,7 @@ private:
     std::vector<std::thread> m_Threads;
     unsigned int number;
     bool isRun;
-    unsigned int fThreads;
+    std::atomic<unsigned int> fThreads;
     void Worker(unsigned int id);
 
     std::condition_variable m_cvDoWork;

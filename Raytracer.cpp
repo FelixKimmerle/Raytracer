@@ -32,10 +32,10 @@ Raytracer::Raytracer(sf::Vector2<unsigned int> p_Size) : m_Size(p_Size)
     m_Last = new vec3[p_Size.x * p_Size.y];
     m_uiSample = 0;
 
-    world.Add(new Sphere(vec3({0, 0, -1}), 0.5, new Lambertian(vec3({0.3, 0.1, 0.1}))));
-    world.Add(new Sphere(vec3({0, -100.5, -1}), 100, new Lambertian(vec3({0.8, 0.8, 0.0}))));
-    world.Add(new Sphere(vec3({1, 0, -1}), 0.5, new Metal(vec3({0.8, 0.6, 0.2}))));
-    world.Add(new Sphere(vec3({-1, 0, -1}), 0.5, new Metal(vec3({0.8, 0.8, 0.8}))));
+    world.Add(new Sphere(vec3({0, 0, -2}), 0.5, new Lambertian(vec3({0.3, 0.1, 0.1}))));
+    world.Add(new Sphere(vec3({0, -30.5, -2}), 30, new Lambertian(vec3({0.8, 0.8, 0.0}))));
+    world.Add(new Sphere(vec3({1, 0, -2}), 0.5, new Metal(vec3({0.8, 0.6, 0.2}))));
+    world.Add(new Sphere(vec3({-1, 0, -2}), 0.5, new Metal(vec3({0.8, 0.8, 0.8}))));
 
 
     number = std::thread::hardware_concurrency();
@@ -54,22 +54,23 @@ sf::Clock sfclock;
 void Raytracer::Worker(unsigned int id)
 {
     std::mutex m_mWorkMutex;
-    mutex.lock();
     fThreads++;
     if (fThreads >= number)
     {
         m_cvDoNotify.notify_all();
     }
-    mutex.unlock();
     while (isRun)
     {
         auto mmm = std::unique_lock<std::mutex>(m_mWorkMutex);
-        m_cvDoWork.wait(mmm);
+        if (fThreads != 0)
+        {
+            m_cvDoWork.wait(mmm);
+        }
         if (!isRun)
         {
             break;
         }
-
+        //std::cout << "Started: " << id << " at: " << sfclock.getElapsedTime().asMilliseconds() << std::endl;
         for (int j = id; j < m_Size.y * m_Size.x; j += number)
         {
             float u = float(j % m_Size.x + random_double()) / float(m_Size.x);
@@ -92,13 +93,12 @@ void Raytracer::Worker(unsigned int id)
             m_Pixels[index + 3] = 255;
         }
 
-        mutex.lock();
         fThreads++;
         if (fThreads >= number)
         {
             m_cvDoNotify.notify_all();
         }
-        mutex.unlock();
+        //std::cout << "Ended: " << id << " at: " << sfclock.getElapsedTime().asMilliseconds() << std::endl;
     }
 }
 
@@ -110,7 +110,7 @@ Raytracer::~Raytracer()
     {
         x->join();
     }
-    
+
     m_Threads.clear();
 }
 void Raytracer::Update()
@@ -129,7 +129,7 @@ void Raytracer::Update()
     m_Sprite.setTexture(m_Texture, true);
 
     m_uiSample++;
-    std::cout << m_uiSample << std::endl;
+    //std::cout << m_uiSample << std::endl;
 }
 
 void Raytracer::draw(sf::RenderTarget &target, sf::RenderStates states) const

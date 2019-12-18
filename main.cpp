@@ -1,6 +1,8 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include "Raytracer.hpp"
+sf::Clock sfclock2;
+#include <iostream>
 int main()
 {
 
@@ -8,7 +10,8 @@ int main()
 
     sf::RenderWindow window(sf::VideoMode(1000, 500), "SFML works!");
     window.setVerticalSyncEnabled(true);
-
+    sfclock2.restart();
+    unsigned int counter = 0;
     while (window.isOpen())
     {
         sf::Event event;
@@ -26,10 +29,16 @@ int main()
                 }
             }
         }
-
+        if(sfclock2.getElapsedTime().asMilliseconds() > 1000)
+        {
+            std::cout << counter << std::endl;
+            counter = 0;
+            sfclock2.restart();
+        }
         window.draw(rc);
         rc.Update();
         window.display();
+        counter++;
     }
 
     return 0;
